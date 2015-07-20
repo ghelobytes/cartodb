@@ -243,6 +243,9 @@ class Api::Json::VisualizationsController < Api::ApplicationController
     vis.add_like_from(current_viewer.id)
        .fetch
        .invalidate_cache
+
+    # TODO: If the user has the "notify me likes to my maps" here we should send a notification to him/her
+    ::Resque.enqueue(::Resque::UserJobs::Mail::MapLiked, vis.id, current_viewer.id)
     render_jsonp({
                    id:    vis.id,
                    likes: vis.likes.count,
@@ -352,7 +355,7 @@ class Api::Json::VisualizationsController < Api::ApplicationController
     # TODO: refactor for making default parameters and total counting obvious
     if params[:type].nil? || params[:type] == ''
       types = params.fetch('types', '').split(',')
-      type = types.include?(Visualization::Member::TYPE_DERIVED) ? Visualization::Member::TYPE_DERIVED : Visualization::Member::TYPE_CANONICAL 
+      type = types.include?(Visualization::Member::TYPE_DERIVED) ? Visualization::Member::TYPE_DERIVED : Visualization::Member::TYPE_CANONICAL
       params.merge( { type: type } )
     else
       params[:type] == Visualization::Member::TYPE_REMOTE ? params.merge( { type: Visualization::Member::TYPE_CANONICAL } ) : params
