@@ -245,7 +245,9 @@ class Api::Json::VisualizationsController < Api::ApplicationController
        .invalidate_cache
 
     # TODO: If the user has the "notify me likes to my maps" here we should send a notification to him/her
-    ::Resque.enqueue(::Resque::UserJobs::Mail::MapLiked, vis.id, current_viewer.id)
+    if (vis.user.is_subscribed_to?(Carto::UserNotifications::LIKE_NOTIFICATION))
+      ::Resque.enqueue(::Resque::UserJobs::Mail::MapLiked, vis.id, current_viewer.id)
+    end
     render_jsonp({
                    id:    vis.id,
                    likes: vis.likes.count,

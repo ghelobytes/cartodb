@@ -65,7 +65,6 @@ class UserMailer < ActionMailer::Base
     @viewer_name = viewer_user.name.nil? ? viewer_user.username : viewer_user.name
     @subject = "#{@viewer_name} has fall in love with your map called #{@map_name}"
     @link = "#{@user.public_url}#{CartoDB.path(self, 'public_tables_show', { id: visualization.id })}"
-    debugger
     mail :to => @user.email,
          :subject => @subject
   end
