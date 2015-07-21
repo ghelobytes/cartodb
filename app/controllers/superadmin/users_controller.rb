@@ -25,6 +25,7 @@ class Superadmin::UsersController < Superadmin::SuperadminController
     @user.enabled = true
 
     if @user.save
+      @user.subscribe_to_notifications
       @user.reload
       @user.set_relationships_from_central(params[:user])
     end

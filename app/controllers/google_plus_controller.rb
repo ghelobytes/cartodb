@@ -27,6 +27,7 @@ class GooglePlusController < ApplicationController
     user_data.set_values(user)
     user.save(raise_on_failure: true)
     user.create_in_central
+    user.subscribe_to_notifications
 
     redirect_to CartoDB.path(self, 'dashboard', {trailing_slash: true})
   end
