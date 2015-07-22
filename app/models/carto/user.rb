@@ -19,6 +19,7 @@ class Carto::User < ActiveRecord::Base
   belongs_to :organization, inverse_of: :users
   has_many :feature_flags_user, dependent: :destroy
   has_many :feature_flags, :through => :feature_flags_user
+  has_many :user_notifications, class_name: Carto::UserNotifications, dependent: :destroy
   has_many :assets, inverse_of: :user
   has_many :data_imports, inverse_of: :user
   has_many :geocodings, inverse_of: :user
@@ -26,14 +27,14 @@ class Carto::User < ActiveRecord::Base
   has_many :search_tweets, inverse_of: :user
   has_many :synchronizations, inverse_of: :user
 
-  delegate [ 
+  delegate [
       :database_username, :database_password, :in_database, :load_cartodb_functions, :rebuild_quota_trigger,
       :db_size_in_bytes, :get_api_calls, :table_count, :public_visualization_count, :visualization_count,
       :twitter_imports_count
     ] => :service
 
   # INFO: select filter is done for security and performance reasons. Add new columns if needed.
-  DEFAULT_SELECT = "users.email, users.username, users.admin, users.organization_id, users.id, users.avatar_url," + 
+  DEFAULT_SELECT = "users.email, users.username, users.admin, users.organization_id, users.id, users.avatar_url," +
                    "users.api_key, users.database_schema, users.database_name, users.name," +
                    "users.disqus_shortname, users.account_type, users.twitter_username, users.google_maps_key"
 
@@ -69,11 +70,11 @@ class Carto::User < ActiveRecord::Base
   end
 
   def feature_flag_names
-    @feature_flag_names ||= (self.feature_flags_user.map { |ff| 
-                                                            ff.feature_flag.name 
-                                                          } + 
-                            FeatureFlag.where(restricted: false).map { |ff| 
-                                                                        ff.name 
+    @feature_flag_names ||= (self.feature_flags_user.map { |ff|
+                                                            ff.feature_flag.name
+                                                          } +
+                            FeatureFlag.where(restricted: false).map { |ff|
+                                                                        ff.name
                                                                       }).uniq.sort
   end
 
@@ -102,6 +103,12 @@ class Carto::User < ActiveRecord::Base
                                                                                  .map { |ff| ff.name }).uniq.sort
   end
 
+  def unsubscribe_notification(hash)
+    self.user_notifications.each{ |n|
+      n.unsubscribe(hash)
+    }
+  end
+
   def has_feature_flag?(feature_flag_name)
     self.feature_flags_list.present? && self.feature_flags_list.include?(feature_flag_name)
   end
@@ -126,7 +133,7 @@ class Carto::User < ActiveRecord::Base
     self.database_schema.include?('-') ? "\"#{self.database_schema}\"" : self.database_schema
   end
 
-  # returns google maps api key. If the user is in an organization and 
+  # returns google maps api key. If the user is in an organization and
   # that organization has api key it's used
   def google_maps_api_key
     if has_organization?
@@ -174,7 +181,7 @@ class Carto::User < ActiveRecord::Base
     google_maps_enabled = !google_maps_api_key.blank?
     basemaps = Cartodb.config[:basemaps]
     if basemaps
-      basemaps.select { |group| 
+      basemaps.select { |group|
         g = group == 'GMaps'
         google_maps_enabled ? g : !g
       }

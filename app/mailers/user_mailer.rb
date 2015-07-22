@@ -65,8 +65,16 @@ class UserMailer < ActionMailer::Base
     @viewer_name = viewer_user.name.nil? ? viewer_user.username : viewer_user.name
     @subject = "#{@viewer_name} has fall in love with your map called #{@map_name}"
     @link = "#{@user.public_url}#{CartoDB.path(self, 'public_tables_show', { id: visualization.id })}"
+    @unsubscribe_link = generate_unsubscribe_link(Carto::UserNotifications::LIKE_NOTIFICATION)
     mail :to => @user.email,
          :subject => @subject
+  end
+
+  private
+
+  def generate_unsubscribe_link(notification_type)
+    hash = Carto::UserNotifications.generate_unsubscribe_hash(@user, notification_type)
+    return "#{@user.public_url}#{CartoDB.path(self, 'notifications_unsubscribe', { notification_hash: hash })}"
   end
 
 end
