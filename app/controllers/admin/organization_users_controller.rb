@@ -40,7 +40,6 @@ class Admin::OrganizationUsersController < ApplicationController
     current_user.copy_account_features(@user)
     @user.save(raise_on_failure: true)
     @user.create_in_central
-    @user.subscribe_to_notifications
     @user.notify_new_organization_user
     redirect_to CartoDB.url(self, 'organization', {}, current_user), flash: { success: "New user created successfully" }
   rescue CartoDB::CentralCommunicationFailure => e

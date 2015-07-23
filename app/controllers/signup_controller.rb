@@ -33,7 +33,6 @@ class SignupController < ApplicationController
       @user_creation = Carto::UserCreation.new_user_signup(@user)
       @user_creation.save
       ::Resque.enqueue(::Resque::UserJobs::Signup::NewUser, @user_creation.id)
-      @user.subscribe_to_notifications
       flash.now[:success] = 'User creation in progress'
       render action: 'signup_confirmation'
     else
