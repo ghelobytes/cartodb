@@ -3,6 +3,7 @@ class ImportMailer < ActionMailer::Base
   layout 'mail'
 
   def data_import_finished(user, imported_tables, total_tables, first_imported_table, first_table, errors)
+    @user = user
     @imported_tables = imported_tables
     @total_tables = total_tables
     @subject = set_subject
